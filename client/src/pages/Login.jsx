@@ -12,8 +12,20 @@ export default function Login(){
     e.preventDefault()
     try{
       const res = await api.post('/auth/login-email', { email, password })
-      localStorage.setItem('token', res.data.token)
-      navigate('/')
+      const { token, mustChangePassword } = res.data || {}
+      localStorage.setItem('token', token)
+      if (mustChangePassword) {
+        navigate('/sifre-degistir')
+        return
+      }
+      // role'a göre yönlendir
+      let role = ''
+      try{
+        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))
+        role = payload.role || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || ''
+      }catch{}
+      if (role === 'Admin') navigate('/admin')
+      else navigate('/')
     }catch(err){
       setError('Giriş başarısız. E-posta veya şifre hatalı.')
     }

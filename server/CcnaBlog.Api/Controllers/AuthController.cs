@@ -27,20 +27,6 @@ namespace CcnaBlog.Api.Controllers
             _httpClientFactory = httpClientFactory;
         }
 
-        // Admin login (mevcut davranışı koru)
-        [EnableRateLimiting("login")]
-        [HttpPost("login")]
-        public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequestDto req)
-        {
-            var user = await _db.AdminUsers.FirstOrDefaultAsync(u => u.Username == req.Username);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
-            {
-                return Unauthorized(new { message = "Kullanıcı adı veya şifre hatalı." });
-            }
-
-            var token = _tokenService.Generate(user);
-            return Ok(new LoginResponseDto(token, user.Username));
-        }
 
         // Üyelik: e-posta ile kayıt
         [EnableRateLimiting("login")]
@@ -58,13 +44,14 @@ namespace CcnaBlog.Api.Controllers
                 Email = email,
                 DisplayName = string.IsNullOrWhiteSpace(req.DisplayName) ? email : req.DisplayName.Trim(),
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.Password),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                MustChangePassword = false
             };
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
 
             var token = _tokenService.GenerateUser(user);
-            return Ok(new LoginResponseUserDto(token, user.Email, user.DisplayName));
+            return Ok(new LoginResponseUserDto(token, user.Email, user.DisplayName, user.MustChangePassword));
         }
 
         // Üyelik: e-posta ile giriş
@@ -81,7 +68,7 @@ namespace CcnaBlog.Api.Controllers
             user.LastLoginAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             var token = _tokenService.GenerateUser(user);
-            return Ok(new LoginResponseUserDto(token, user.Email, user.DisplayName));
+            return Ok(new LoginResponseUserDto(token, user.Email, user.DisplayName, user.MustChangePassword));
         }
 
         // OAuth: Google ile giriş
@@ -241,33 +228,53 @@ namespace CcnaBlog.Api.Controllers
             return Convert.FromBase64String(base64);
         }
 
-        // Development-only admin password reset endpoint
-        [HttpPost("dev/reset-admin")]
-        public async Task<IActionResult> DevResetAdmin([FromBody] Dictionary<string, string> body)
+
+        // Development-only: set or reset password for a membership user (by email)
+        [HttpPost("dev/set-admin-user-password")]
+        public async Task<IActionResult> DevSetAdminUserPassword([FromBody] Dictionary<string, string> body)
         {
             var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             if (!string.Equals(env, "Development", StringComparison.OrdinalIgnoreCase))
                 return NotFound();
 
-            if (body == null || !body.TryGetValue("password", out var newPass) || string.IsNullOrWhiteSpace(newPass))
-                return BadRequest(new { message = "password gerekli" });
-
-            var admin = await _db.AdminUsers.FirstOrDefaultAsync(u => u.Username == "admin");
-            if (admin == null)
+            if (body == null || !body.TryGetValue("email", out var email) || !body.TryGetValue("password", out var pass) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(pass))
+                return BadRequest(new { message = "email ve password gerekli" });
+            email = email.Trim().ToLowerInvariant();
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
             {
-                _db.AdminUsers.Add(new AdminUser
-                {
-                    Username = "admin",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPass),
-                    CreatedAt = DateTime.UtcNow
-                });
+                user = new User { Email = email, DisplayName = email, CreatedAt = DateTime.UtcNow };
+                _db.Users.Add(user);
             }
-            else
-            {
-                admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPass);
-            }
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(pass);
+            user.MustChangePassword = true;
             await _db.SaveChangesAsync();
             return Ok(new { message = "ok" });
+        }
+
+        // Authenticated: change password
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        [HttpPost("change-password")]
+        public async Task<ActionResult<LoginResponseUserDto>> ChangePassword([FromBody] ChangePasswordRequestDto req)
+        {
+            if (req == null || string.IsNullOrWhiteSpace(req.CurrentPassword) || string.IsNullOrWhiteSpace(req.NewPassword))
+                return BadRequest(new { message = "Mevcut ve yeni şifre gereklidir." });
+            if (req.NewPassword.Length < 6) return BadRequest(new { message = "Yeni şifre en az 6 karakter olmalı." });
+
+            var email = User?.Claims?.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+            if (string.IsNullOrWhiteSpace(email)) return Unauthorized();
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null) return Unauthorized();
+            if (string.IsNullOrWhiteSpace(user.PasswordHash) || !BCrypt.Net.BCrypt.Verify(req.CurrentPassword, user.PasswordHash))
+                return BadRequest(new { message = "Mevcut şifre yanlış." });
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
+            user.MustChangePassword = false;
+            await _db.SaveChangesAsync();
+
+            var token = _tokenService.GenerateUser(user);
+            return Ok(new LoginResponseUserDto(token, user.Email, user.DisplayName, user.MustChangePassword));
         }
     }
 }

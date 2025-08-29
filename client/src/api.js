@@ -21,7 +21,7 @@ api.interceptors.response.use(
   err => {
     if (err?.response?.status === 401) {
       localStorage.removeItem('token')
-      if (typeof window !== 'undefined') window.location.href = '/admin/giris'
+      if (typeof window !== 'undefined') window.location.href = '/giris'
     }
     return Promise.reject(err)
   }

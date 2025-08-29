@@ -1,9 +1,24 @@
-import { NavLink, Link } from 'react-router-dom'
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { getRole, getName } from '../auth'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
+  const role = useMemo(()=>getRole(token), [location, token])
+  const name = useMemo(()=>getName(token), [location, token])
+  const isAuth = !!token
+  const isAdmin = role === 'Admin'
+
+  const logout = () => {
+    localStorage.removeItem('token')
+    navigate('/giris')
+  }
+
   return (
     <header className="bg-white/80 backdrop-blur sticky top-0 z-40 border-b border-gray-100">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -19,8 +34,21 @@ export default function Navbar() {
           <form action="/ara" className="relative">
             <input name="q" className="border rounded-lg px-3 py-1 text-sm" placeholder="Ara..." />
           </form>
-          <NavLink to="/giris" className={({isActive})=>`hover:text-blue-600 ${isActive?'text-blue-600':'text-gray-700'}`}>Giriş</NavLink>
-          <NavLink to="/admin" className={({isActive})=>`hover:text-blue-600 ${isActive?'text-blue-600':'text-gray-700'}`}>Admin</NavLink>
+          {!isAuth && (
+            <>
+              <NavLink to="/giris" className={({isActive})=>`hover:text-blue-600 ${isActive?'text-blue-600':'text-gray-700'}`}>Giriş</NavLink>
+              <NavLink to="/kayit" className={({isActive})=>`hover:text-blue-600 ${isActive?'text-blue-600':'text-gray-700'}`}>Kayıt</NavLink>
+            </>
+          )}
+          {isAuth && (
+            <>
+              {isAdmin && (
+                <NavLink to="/admin" className={({isActive})=>`hover:text-blue-600 ${isActive?'text-blue-600':'text-gray-700'}`}>Admin</NavLink>
+              )}
+              <span className="text-gray-600">Merhaba, {name || 'Üye'}</span>
+              <button onClick={logout} className="px-3 py-1 rounded border hover:bg-gray-50">Çıkış</button>
+            </>
+          )}
         </nav>
       </div>
       {open && (
@@ -30,8 +58,21 @@ export default function Navbar() {
             <NavLink onClick={()=>setOpen(false)} to="/kategoriler" className={({isActive})=>`py-1 ${isActive?'text-blue-600':'text-gray-700'}`}>Kategoriler</NavLink>
             <NavLink onClick={()=>setOpen(false)} to="/hakkinda" className={({isActive})=>`py-1 ${isActive?'text-blue-600':'text-gray-700'}`}>Hakkında</NavLink>
             <NavLink onClick={()=>setOpen(false)} to="/iletisim" className={({isActive})=>`py-1 ${isActive?'text-blue-600':'text-gray-700'}`}>İletişim</NavLink>
-            <NavLink onClick={()=>setOpen(false)} to="/giris" className={({isActive})=>`py-1 ${isActive?'text-blue-600':'text-gray-700'}`}>Giriş</NavLink>
-            <NavLink onClick={()=>setOpen(false)} to="/admin" className={({isActive})=>`py-1 ${isActive?'text-blue-600':'text-gray-700'}`}>Admin</NavLink>
+            {!isAuth && (
+              <>
+                <NavLink onClick={()=>setOpen(false)} to="/giris" className={({isActive})=>`py-1 ${isActive?'text-blue-600':'text-gray-700'}`}>Giriş</NavLink>
+                <NavLink onClick={()=>setOpen(false)} to="/kayit" className={({isActive})=>`py-1 ${isActive?'text-blue-600':'text-gray-700'}`}>Kayıt</NavLink>
+              </>
+            )}
+            {isAuth && (
+              <>
+                {isAdmin && (
+                  <NavLink onClick={()=>setOpen(false)} to="/admin" className={({isActive})=>`py-1 ${isActive?'text-blue-600':'text-gray-700'}`}>Admin</NavLink>
+                )}
+                <span className="py-1 text-gray-600">Merhaba, {name || 'Üye'}</span>
+                <button onClick={()=>{ setOpen(false); logout() }} className="py-1 text-left">Çıkış</button>
+              </>
+            )}
           </div>
         </div>
       )}

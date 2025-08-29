@@ -9,7 +9,6 @@ namespace CcnaBlog.Api.Data
         {
         }
 
-        public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
         public DbSet<User> Users => Set<User>();
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Post> Posts => Set<Post>();

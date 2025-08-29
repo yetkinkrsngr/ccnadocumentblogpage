@@ -1,0 +1,46 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: edupage-db
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_PID=Express
+      - SA_PASSWORD=${SA_PASSWORD}
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q 'SQL Server is now ready for client connections' /var/opt/mssql/log/errorlog"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+
+  api:
+    build:
+      context: ./server/CcnaBlog.Api
+      dockerfile: Dockerfile
+    container_name: edupage-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:5153
+      - ConnectionStrings__DefaultConnection=Server=db;Database=CcnaBlogDb;User ID=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;Encrypt=True;MultipleActiveResultSets=True
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5153:5153"
+
+  web:
+    build:
+      context: ./client
+    container_name: edupage-web
+    depends_on:
+      - api
+    ports:
+      - "8081:80"
+
+volumes:
+  mssqldata:
+

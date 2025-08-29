@@ -15,6 +15,9 @@ namespace CcnaBlog.Api.Models
         // null olabilir: sadece harici sağlayıcıyla kayıtlı kullanıcılar için
         public string? PasswordHash { get; set; }
 
+        // Zorunlu şifre değiştirme bayrağı
+        public bool MustChangePassword { get; set; } = false;
+
         // OAuth sağlayıcı bilgileri (opsiyonel)
         [MaxLength(50)]
         public string? Provider { get; set; }

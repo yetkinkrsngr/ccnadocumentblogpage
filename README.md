@@ -6,7 +6,7 @@ Teknikler:
 - Frontend: React + Vite + TailwindCSS
 - Backend: ASP.NET Core (.NET 8) Web API
 - Veritabanı: Microsoft SQL Server (LocalDB varsayılan)
-- Kimlik Doğrulama: JWT (admin)
+- Kimlik Doğrulama: JWT (üyelik + admin e-posta listesi)
 
 Özellikler:
 - Ana sayfada kart grid yapısı
@@ -30,8 +30,8 @@ Teknikler:
 # restore + build
  dotnet build server/CcnaBlog.Api/CcnaBlog.Api.csproj
 
-# geliştirme profili (http:5153)
- dotnet run --project server/CcnaBlog.Api/CcnaBlog.Api.csproj --launch-profile http
+# 5153 portundan dinle
+ dotnet run --project server/CcnaBlog.Api/CcnaBlog.Api.csproj -- --urls http://localhost:5153
 ```
 
 - İlk çalıştırmada veritabanı şeması otomatik oluşturulur ve örnek veriler seed edilir.
@@ -52,8 +52,10 @@ Teknikler:
 - İsterseniz client dizininde `.env` oluşturup `VITE_API_URL=http://localhost:5153/api` tanımlayabilirsiniz.
 
 ## Admin Bilgileri
-- Kullanıcı adı: `admin`
-- Şifre: `Admin123!`
+- Admin e-postası: `yetkinkrsngr@gmail.com` (appsettings.json > Admin:Emails içinde tanımlı)
+- İlk şifre: `Admin123!` (seed ile oluşturulur, MustChangePassword=true)
+- Giriş: /giris üzerinden e-posta ile yapılır. İlk girişte otomatik `/sifre-degistir` sayfasına yönlendirilir.
+- Geliştirme yardımı: POST `/api/auth/dev/set-admin-user-password` ile (Development ortamında) admin e-postası için şifre set edilebilir.
 
 JWT anahtarı (geliştirme): server/CcnaBlog.Api/appsettings.json içinde `Jwt:Key`. Üretimde ortam değişkeni veya gizli yönetimi kullanın.
 
@@ -66,13 +68,13 @@ EduPage/
  │       ├─ Controllers/ (Auth, Posts, Categories, Comments)
  │       ├─ Data/ (AppDbContext)
  │       ├─ DTOs/
- │       ├─ Models/ (Post, Category, Comment, AdminUser)
+│       ├─ Models/ (Post, Category, Comment, User)
  │       ├─ Services/ (TokenService, ProfanityFilter, SeedData)
  │       ├─ Program.cs, appsettings.json
  │
  └─ client/
      ├─ src/
-     │  ├─ admin/ (Login, Dashboard, Posts, EditPost, Categories, Comments)
+│  ├─ admin/ (Dashboard, Posts, EditPost, Categories, Comments)
      │  ├─ components/ (Navbar, Footer, PostCard, ProtectedRoute)
      │  ├─ pages/ (Home, Categories, About, Contact, Post)
      │  ├─ api.js, prism-cisco.js, index.css, main.jsx, App.jsx
@@ -93,5 +95,5 @@ switchport mode trunk
 - Üretimde:
   - Gerçek MSSQL sunucusu bağlantı dizesini `appsettings.json` veya ortam değişkeninde `ConnectionStrings__DefaultConnection` olarak tanımlayın.
   - `Jwt:Key` için güvenli bir anahtar belirleyin ve ortam değişkeni kullanın.
-  - EF Core migration kullanmak isterseniz `EnsureCreated` yerine migration akışı ekleyin.
+  - Uygulama başlangıcında bekleyen EF Core migration’lar otomatik uygulanır (`db.Database.Migrate`).
 

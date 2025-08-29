@@ -1,13 +1,10 @@
 namespace CcnaBlog.Api.DTOs
 {
-    // Auth (Admin)
-    public record LoginRequestDto(string Username, string Password);
-    public record LoginResponseDto(string Token, string Username);
-
     // Auth (Membership)
     public record RegisterRequestDto(string Email, string Password, string DisplayName);
     public record LoginEmailRequestDto(string Email, string Password);
-    public record LoginResponseUserDto(string Token, string Email, string DisplayName);
+    public record LoginResponseUserDto(string Token, string Email, string DisplayName, bool MustChangePassword);
+    public record ChangePasswordRequestDto(string CurrentPassword, string NewPassword);
 
     // Category
     public record CategoryDto(int Id, string Name, string Slug);

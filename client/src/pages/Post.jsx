@@ -15,22 +15,33 @@ export default function Post(){
   const [authorName, setAuthorName] = useState('')
   const [content, setContent] = useState('')
   const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
+    setError('')
+    setPost(null)
     api.get(`/posts/${slug}`).then(res => {
       setPost(res.data)
       setComments(res.data.comments)
       document.title = `${res.data.title} - CCNA Blog`
+    }).catch(err => {
+      if (err?.response?.status === 404) setError('Yazı bulunamadı.')
+      else setError('İçerik yüklenemedi. Lütfen daha sonra tekrar deneyin.')
     })
   }, [slug])
 
   const submitComment = async (e) => {
     e.preventDefault()
     if(!post) return
-    await api.post(`/comments/post/${post.id}`, { authorName, content })
-    setAuthorName(''); setContent(''); setMessage('Yorumunuz alındı, onay sürecinde. Teşekkürler!')
+    try{
+      await api.post(`/comments/post/${post.id}`, { authorName, content })
+      setAuthorName(''); setContent(''); setMessage('Yorumunuz alındı, onay sürecinde. Teşekkürler!')
+    }catch{
+      setMessage('Yorum gönderilemedi. Lütfen tekrar deneyin.')
+    }
   }
 
+  if(error) return <div className="max-w-3xl mx-auto"><p className="text-red-600">{error}</p></div>
   if(!post) return <p>Yükleniyor...</p>
 
   return (

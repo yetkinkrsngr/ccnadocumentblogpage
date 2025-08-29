@@ -7,16 +7,24 @@ namespace CcnaBlog.Api.Services
 {
     public static class SeedData
     {
-        public static async Task EnsureSeedAsync(AppDbContext db)
+        public static async Task EnsureSeedAsync(AppDbContext db, IConfiguration config)
         {
-            if (!await db.AdminUsers.AnyAsync(u => u.Username == "admin"))
+            // Admin e-postaları için üyelik tablosunda başlangıç kaydı (zorunlu şifre değişimi ile)
+            var adminEmails = config.GetSection("Admin:Emails").GetChildren().Select(c => (c.Value ?? "").Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+            foreach (var email in adminEmails)
             {
-                db.AdminUsers.Add(new AdminUser
+                var lower = email.ToLowerInvariant();
+                if (!await db.Users.AnyAsync(u => u.Email == lower))
                 {
-                    Username = "admin",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
-                    CreatedAt = DateTime.UtcNow
-                });
+                    db.Users.Add(new User
+                    {
+                        Email = lower,
+                        DisplayName = lower,
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
+                        MustChangePassword = true,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
             }
 
             if (!await db.Categories.AnyAsync())
@@ -65,17 +73,6 @@ namespace CcnaBlog.Api.Services
 
             await db.SaveChangesAsync();
 
-            // Optional admin password override via environment variable (no plaintext stored)
-            var newPass = Environment.GetEnvironmentVariable("ADMIN_NEW_PASSWORD");
-            if (!string.IsNullOrWhiteSpace(newPass))
-            {
-                var admin = await db.AdminUsers.FirstOrDefaultAsync(u => u.Username == "admin");
-                if (admin != null)
-                {
-                    admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPass);
-                    await db.SaveChangesAsync();
-                }
-            }
         }
 
         public static string Slugify(string input)
