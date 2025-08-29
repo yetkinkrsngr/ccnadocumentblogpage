@@ -1,0 +1,19 @@
+# Node
+client/node_modules/
+client/dist/
+
+# .NET
+**/bin/
+**/obj/
+*.user
+*.suo
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
+
+# Env
+.env
+.env.*.local
