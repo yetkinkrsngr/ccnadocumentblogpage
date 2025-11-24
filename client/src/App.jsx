@@ -23,6 +23,7 @@ const CategoriesAdmin = lazy(() => import('./admin/Categories'))
 const CommentsAdmin = lazy(() => import('./admin/Comments'))
 const MediaAdmin = lazy(() => import('./admin/Media'))
 const ChangePassword = lazy(() => import('./pages/ChangePassword'))
+const AuthDebug = lazy(() => import('./pages/AuthDebug'))
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
               <Route path="/kayit" element={<RegisterPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/sifre-degistir" element={<ChangePassword />} />
+              <Route path="/auth-debug" element={<AuthDebug />} />
 
               {/* Admin */}
               <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

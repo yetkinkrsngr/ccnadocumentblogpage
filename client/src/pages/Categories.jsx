@@ -27,21 +27,45 @@ export default function Categories() {
   return (
     <div className="grid md:grid-cols-4 gap-6">
       <aside className="md:col-span-1">
-        <ul className="bg-white rounded-xl shadow-soft p-4 space-y-2">
-          <li>
-            <button onClick={()=>setParams({})} className={`w-full text-left px-3 py-2 rounded ${!selected?'bg-blue-50 text-blue-700':''}`}>Tümü</button>
-          </li>
-          {categories.map(c => (
-            <li key={c.id}>
-              <button onClick={()=>setParams({sec: c.slug})} className={`w-full text-left px-3 py-2 rounded ${selected===c.slug?'bg-blue-50 text-blue-700':''}`}>{c.name}</button>
+        <div className="bg-white rounded-xl shadow-soft p-4">
+          <h2 className="text-lg font-semibold mb-3 text-gray-800">Kategoriler</h2>
+          <ul className="space-y-1">
+            <li>
+              <button
+                onClick={() => setParams({})}
+                className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${!selected
+                    ? 'bg-blue-600 text-white font-medium'
+                    : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+              >
+                Tümü
+              </button>
             </li>
-          ))}
-        </ul>
+            {categories.map(c => (
+              <li key={c.id}>
+                <button
+                  onClick={() => setParams({ sec: c.slug })}
+                  className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${selected === c.slug
+                      ? 'bg-blue-600 text-white font-medium'
+                      : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                >
+                  {c.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </aside>
       <section className="md:col-span-3">
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map(p => <PostCard key={p.id} post={p} />)}
         </div>
+        {posts.length === 0 && (
+          <div className="text-center py-12 text-gray-500">
+            Bu kategoride henüz yazı bulunmuyor.
+          </div>
+        )}
       </section>
     </div>
   )
