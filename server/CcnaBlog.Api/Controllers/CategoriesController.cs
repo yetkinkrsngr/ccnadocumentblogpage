@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using CcnaBlog.Api.Data;
 using CcnaBlog.Api.DTOs;
 using CcnaBlog.Api.Models;

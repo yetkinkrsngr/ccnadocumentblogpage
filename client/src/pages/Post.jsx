@@ -54,7 +54,7 @@ export default function Post() {
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeSanitize]}
           components={{
-            code({ node, inline, className, children, ...props }) {
+            code({ inline, className, children, ...props }) {
               const match = /language-(\w+)/.exec(className || '')
               const lang = match ? match[1] : ''
 
@@ -66,7 +66,7 @@ export default function Post() {
                   } else {
                     highlighted = String(children).replace(/\n$/, '')
                   }
-                } catch (e) {
+                } catch {
                   highlighted = String(children).replace(/\n$/, '')
                 }
 
@@ -107,12 +107,12 @@ export default function Post() {
 
         <form onSubmit={submitComment} className="bg-white p-4 rounded-xl shadow-soft space-y-3">
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Adınız (opsiyonel)</label>
-            <input value={authorName} onChange={e => setAuthorName(e.target.value)} className="w-full border rounded-lg px-3 py-2" placeholder="Örn. Ahmet" />
+            <label htmlFor="authorName" className="block text-sm text-gray-600 mb-1">Adınız (opsiyonel)</label>
+            <input id="authorName" value={authorName} onChange={e => setAuthorName(e.target.value)} className="w-full border rounded-lg px-3 py-2" placeholder="Örn. Ahmet" />
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Yorumunuz</label>
-            <textarea value={content} onChange={e => setContent(e.target.value)} required rows={4} className="w-full border rounded-lg px-3 py-2" placeholder="Yapıcı geri bildiriminizi yazın..." />
+            <label htmlFor="commentContent" className="block text-sm text-gray-600 mb-1">Yorumunuz</label>
+            <textarea id="commentContent" value={content} onChange={e => setContent(e.target.value)} required rows={4} className="w-full border rounded-lg px-3 py-2" placeholder="Yapıcı geri bildiriminizi yazın..." />
             <p className="text-xs text-gray-500 mt-1">Basit küfür engelleme aktif; tüm yorumlar önce admin onayına gider.</p>
           </div>
           {message && <p className="text-green-600 text-sm">{message}</p>}

@@ -1,17 +1,16 @@
 import { useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
-export default function AuthCallback(){
+export default function AuthCallback() {
   const navigate = useNavigate()
-  const location = useLocation()
 
-  useEffect(()=>{
+  useEffect(() => {
     const url = new URL(window.location.href)
     const token = url.searchParams.get('token') || ''
-    if(token){
+    if (token) {
       localStorage.setItem('token', token)
       navigate('/')
-    }else{
+    } else {
       navigate('/giris')
     }
   }, [])

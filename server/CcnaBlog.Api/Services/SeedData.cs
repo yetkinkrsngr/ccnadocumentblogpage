@@ -42,12 +42,14 @@ namespace CcnaBlog.Api.Services
 
             await db.SaveChangesAsync();
 
-            if (!await db.Posts.AnyAsync())
-            {
-                var routingCat = await db.Categories.FirstAsync(c => c.Slug == Slugify("Routing"));
-                var switchingCat = await db.Categories.FirstAsync(c => c.Slug == Slugify("Switching"));
+            // Yazıları tek tek kontrol edip ekle
+            var routingCat = await db.Categories.FirstOrDefaultAsync(c => c.Slug == Slugify("Routing"));
+            var switchingCat = await db.Categories.FirstOrDefaultAsync(c => c.Slug == Slugify("Switching"));
 
-                db.Posts.AddRange(
+            if (routingCat != null && switchingCat != null)
+            {
+                var newPosts = new[]
+                {
                     new Post
                     {
                         Title = "CCNA: Statik Yönlendirme Temelleri",
@@ -67,8 +69,36 @@ namespace CcnaBlog.Api.Services
                         CategoryId = switchingCat.Id,
                         Content = "# VLAN Oluşturma\n\nÖrnek bir VLAN oluşturma ve trunk ayarı:\n\n```cisco\nconfigure terminal\nvlan 10\nname KURUM_ICI\ninterface GigabitEthernet0/1\nswitchport mode trunk\nswitchport trunk allowed vlan 10,20\nend\nwrite memory\n```\n",
                         CreatedAt = DateTime.UtcNow
+                    },
+                    new Post
+                    {
+                        Title = "Cisco IOS Temel Komutlar",
+                        Slug = Slugify("Cisco IOS Temel Komutlar"),
+                        Summary = "Cisco cihazlarını yönetmek için kullanılan temel IOS komutları.",
+                        Author = "Admin",
+                        CategoryId = routingCat.Id,
+                        Content = "# Cisco IOS Temel Komutlar\n\nCisco cihazlarında (Router/Switch) sık kullanılan bazı temel komutlar şunlardır:\n\n## Modlar\n* **User Exec Mode:** `Router>`\n* **Privileged Exec Mode:** `Router#` (Geçiş için `enable`)\n* **Global Configuration Mode:** `Router(config)#` (Geçiş için `configure terminal`)\n\n## Temel Ayarlar\n```cisco\nhostname R1\nno ip domain-lookup\nline console 0\n logging synchronous\n login local\n```\n\nBu komutlar cihaz adını belirler ve konsol erişimini yapılandırır.",
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new Post
+                    {
+                        Title = "Ağ Temelleri: OSI Modeli",
+                        Slug = Slugify("Ağ Temelleri: OSI Modeli"),
+                        Summary = "OSI referans modeli ve 7 katmanının detaylı incelemesi.",
+                        Author = "Admin",
+                        CategoryId = switchingCat.Id,
+                        Content = "# OSI Modeli\n\nAğ iletişimini standartlaştıran OSI modeli 7 katmandan oluşur:\n\n1. **Fiziksel (Physical):** Kablolar, sinyaller (Bitler).\n2. **Veri Bağı (Data Link):** MAC adresleri, Switch'ler (Frame).\n3. **Ağ (Network):** IP adresleri, Router'lar (Paket).\n4. **Taşıma (Transport):** TCP/UDP, Portlar (Segment).\n5. **Oturum (Session):** Bağlantı yönetimi.\n6. **Sunum (Presentation):** Veri formatı, şifreleme.\n7. **Uygulama (Application):** HTTP, FTP, SMTP gibi protokoller.\n\nHer katman bir üsttekine hizmet verir.",
+                        CreatedAt = DateTime.UtcNow
                     }
-                );
+                };
+
+                foreach (var p in newPosts)
+                {
+                    if (!await db.Posts.AnyAsync(x => x.Slug == p.Slug))
+                    {
+                        db.Posts.Add(p);
+                    }
+                }
             }
 
             await db.SaveChangesAsync();

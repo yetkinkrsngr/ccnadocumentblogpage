@@ -2,16 +2,16 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 
-export default function ChangePassword(){
+export default function ChangePassword() {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const navigate = useNavigate()
 
-  useEffect(()=>{
+  useEffect(() => {
     const token = localStorage.getItem('token')
-    if(!token){
+    if (!token) {
       navigate('/giris', { replace: true })
     }
   }, [])
@@ -20,7 +20,7 @@ export default function ChangePassword(){
     e.preventDefault()
     setError('')
     setSuccess('')
-    try{
+    try {
       const res = await api.post('/auth/change-password', { currentPassword, newPassword })
       const { token } = res.data || {}
       if (token) {
@@ -28,15 +28,15 @@ export default function ChangePassword(){
       }
       setSuccess('Şifre başarıyla güncellendi.')
       // Eğer admin ise admin paneline, değilse ana sayfaya gönder
-      try{
-        const payload = JSON.parse(atob(String(token || localStorage.getItem('token')).split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))
+      try {
+        const payload = JSON.parse(atob(String(token || localStorage.getItem('token')).split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
         const role = payload.role || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || ''
         if (role === 'Admin') navigate('/admin')
         else navigate('/')
-      }catch{
+      } catch {
         navigate('/')
       }
-    }catch(err){
+    } catch (err) {
       setError(err?.response?.data?.message || 'Şifre değiştirilemedi. Bilgileri kontrol edin.')
     }
   }
@@ -46,12 +46,12 @@ export default function ChangePassword(){
       <h1 className="text-2xl font-semibold mb-6">Şifre Değiştir</h1>
       <form onSubmit={submit} className="bg-white p-6 rounded-xl shadow-soft space-y-4">
         <div>
-          <label className="block text-sm text-gray-600 mb-1">Mevcut Şifre</label>
-          <input type="password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)} className="w-full border rounded-lg px-3 py-2" placeholder="••••••" required />
+          <label htmlFor="currentPassword" className="block text-sm text-gray-600 mb-1">Mevcut Şifre</label>
+          <input id="currentPassword" type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="w-full border rounded-lg px-3 py-2" placeholder="••••••" required />
         </div>
         <div>
-          <label className="block text-sm text-gray-600 mb-1">Yeni Şifre</label>
-          <input type="password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="w-full border rounded-lg px-3 py-2" placeholder="en az 6 karakter" required />
+          <label htmlFor="newPassword" className="block text-sm text-gray-600 mb-1">Yeni Şifre</label>
+          <input id="newPassword" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full border rounded-lg px-3 py-2" placeholder="en az 6 karakter" required />
         </div>
         {error && <p className="text-red-600 text-sm">{error}</p>}
         {success && <p className="text-green-600 text-sm">{success}</p>}

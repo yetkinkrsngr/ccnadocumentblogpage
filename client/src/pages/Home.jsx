@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { api } from '../api'
 import PostCard from '../components/PostCard'
 
@@ -16,7 +16,7 @@ export default function Home() {
   useEffect(() => {
     api.get(`/posts?page=${page}&pageSize=${pageSize}`)
       .then(res => { setPosts(res.data.items); setTotal(res.data.total) })
-      .catch(() => {})
+      .catch(() => { })
   }, [page])
 
   const maxPage = Math.max(1, Math.ceil(total / pageSize))
@@ -33,9 +33,9 @@ export default function Home() {
       </div>
 
       <div className="flex items-center gap-2 justify-center mt-8">
-        <button disabled={page<=1} className="px-3 py-1 rounded border disabled:opacity-50" onClick={()=>setPage(p=>Math.max(1,p-1))}>Önceki</button>
+        <button disabled={page <= 1} className="px-3 py-1 rounded border disabled:opacity-50" onClick={() => setPage(p => Math.max(1, p - 1))}>Önceki</button>
         <span className="text-sm text-gray-500">Sayfa {page} / {maxPage}</span>
-        <button disabled={page>=maxPage} className="px-3 py-1 rounded border disabled:opacity-50" onClick={()=>setPage(p=>Math.min(maxPage,p+1))}>Sonraki</button>
+        <button disabled={page >= maxPage} className="px-3 py-1 rounded border disabled:opacity-50" onClick={() => setPage(p => Math.min(maxPage, p + 1))}>Sonraki</button>
       </div>
     </div>
   )

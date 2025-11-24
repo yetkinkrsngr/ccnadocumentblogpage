@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 
-export default function Login(){
+export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -10,7 +10,7 @@ export default function Login(){
 
   const submit = async (e) => {
     e.preventDefault()
-    try{
+    try {
       const res = await api.post('/auth/login-email', { email, password })
       const { token, mustChangePassword } = res.data || {}
       localStorage.setItem('token', token)
@@ -20,13 +20,13 @@ export default function Login(){
       }
       // role'a göre yönlendir
       let role = ''
-      try{
-        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
         role = payload.role || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || ''
-      }catch{}
+      } catch { /* ignore */ }
       if (role === 'Admin') navigate('/admin')
       else navigate('/')
-    }catch(err){
+    } catch {
       setError('Giriş başarısız. E-posta veya şifre hatalı.')
     }
   }
@@ -45,12 +45,12 @@ export default function Login(){
       <h1 className="text-2xl font-semibold mb-6">Giriş Yap</h1>
       <form onSubmit={submit} className="bg-white p-6 rounded-xl shadow-soft space-y-4">
         <div>
-          <label className="block text-sm text-gray-600 mb-1">E-posta</label>
-          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full border rounded-lg px-3 py-2" placeholder="mail@ornek.com" required />
+          <label htmlFor="email" className="block text-sm text-gray-600 mb-1">E-posta</label>
+          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border rounded-lg px-3 py-2" placeholder="mail@ornek.com" required />
         </div>
         <div>
-          <label className="block text-sm text-gray-600 mb-1">Şifre</label>
-          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full border rounded-lg px-3 py-2" placeholder="••••••" required />
+          <label htmlFor="password" className="block text-sm text-gray-600 mb-1">Şifre</label>
+          <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border rounded-lg px-3 py-2" placeholder="••••••" required />
         </div>
         {error && <p className="text-red-600 text-sm">{error}</p>}
         <button className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Giriş Yap</button>
