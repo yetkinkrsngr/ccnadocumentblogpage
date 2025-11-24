@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
+import Prism from 'prismjs'
 import remarkGfm from 'remark-gfm'
-import rehypePrism from 'rehype-prism-plus'
 import rehypeSanitize from 'rehype-sanitize'
 import 'prismjs/themes/prism.css'
 import '../prism-cisco'
 import { api } from '../api'
 
-export default function Post(){
+export default function Post() {
   const { slug } = useParams()
   const [post, setPost] = useState(null)
   const [comments, setComments] = useState([])
@@ -32,17 +32,17 @@ export default function Post(){
 
   const submitComment = async (e) => {
     e.preventDefault()
-    if(!post) return
-    try{
+    if (!post) return
+    try {
       await api.post(`/comments/post/${post.id}`, { authorName, content })
       setAuthorName(''); setContent(''); setMessage('Yorumunuz alındı, onay sürecinde. Teşekkürler!')
-    }catch{
+    } catch {
       setMessage('Yorum gönderilemedi. Lütfen tekrar deneyin.')
     }
   }
 
-  if(error) return <div className="max-w-3xl mx-auto"><p className="text-red-600">{error}</p></div>
-  if(!post) return <p>Yükleniyor...</p>
+  if (error) return <div className="max-w-3xl mx-auto"><p className="text-red-600">{error}</p></div>
+  if (!post) return <p>Yükleniyor...</p>
 
   return (
     <article className="max-w-3xl mx-auto">
@@ -50,16 +50,45 @@ export default function Post(){
       <div className="text-sm text-gray-500 mb-6">{new Date(post.createdAt).toLocaleDateString('tr-TR')} • {post.author} • {post.categoryName}</div>
 
       <div className="prose max-w-none prose-headings:scroll-mt-24">
-        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypePrism, rehypeSanitize]} components={{
-          code({node, inline, className, children, ...props}){
-            const match = /language-(\w+)/.exec(className || '')
-            return (
-              <code className={`rounded ${className || ''}`} {...props}>
-                {children}
-              </code>
-            )
-          }
-        }}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeSanitize]}
+          components={{
+            code({ node, inline, className, children, ...props }) {
+              const match = /language-(\w+)/.exec(className || '')
+              const lang = match ? match[1] : ''
+
+              if (!inline && lang) {
+                let highlighted
+                try {
+                  if (Prism.languages[lang]) {
+                    highlighted = Prism.highlight(String(children).replace(/\n$/, ''), Prism.languages[lang], lang)
+                  } else {
+                    highlighted = String(children).replace(/\n$/, '')
+                  }
+                } catch (e) {
+                  highlighted = String(children).replace(/\n$/, '')
+                }
+
+                return (
+                  <pre className={className}>
+                    <code
+                      className={className}
+                      dangerouslySetInnerHTML={{ __html: highlighted }}
+                      {...props}
+                    />
+                  </pre>
+                )
+              }
+
+              return (
+                <code className={`rounded ${className || ''}`} {...props}>
+                  {children}
+                </code>
+              )
+            }
+          }}
+        >
           {post.content}
         </ReactMarkdown>
       </div>
@@ -79,11 +108,11 @@ export default function Post(){
         <form onSubmit={submitComment} className="bg-white p-4 rounded-xl shadow-soft space-y-3">
           <div>
             <label className="block text-sm text-gray-600 mb-1">Adınız (opsiyonel)</label>
-            <input value={authorName} onChange={e=>setAuthorName(e.target.value)} className="w-full border rounded-lg px-3 py-2" placeholder="Örn. Ahmet" />
+            <input value={authorName} onChange={e => setAuthorName(e.target.value)} className="w-full border rounded-lg px-3 py-2" placeholder="Örn. Ahmet" />
           </div>
           <div>
             <label className="block text-sm text-gray-600 mb-1">Yorumunuz</label>
-            <textarea value={content} onChange={e=>setContent(e.target.value)} required rows={4} className="w-full border rounded-lg px-3 py-2" placeholder="Yapıcı geri bildiriminizi yazın..." />
+            <textarea value={content} onChange={e => setContent(e.target.value)} required rows={4} className="w-full border rounded-lg px-3 py-2" placeholder="Yapıcı geri bildiriminizi yazın..." />
             <p className="text-xs text-gray-500 mt-1">Basit küfür engelleme aktif; tüm yorumlar önce admin onayına gider.</p>
           </div>
           {message && <p className="text-green-600 text-sm">{message}</p>}

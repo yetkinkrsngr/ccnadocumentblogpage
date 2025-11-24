@@ -54,7 +54,7 @@ namespace CcnaBlog.Api.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost("upload")]
         [RequestSizeLimit(20_000_000)]
-        public async Task<ActionResult<UploadResponseDto>> Upload([FromForm] IFormFile file)
+        public async Task<ActionResult<UploadResponseDto>> Upload(IFormFile file)
         {
             if (file == null || file.Length == 0) return BadRequest("Dosya alınamadı.");
             var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
