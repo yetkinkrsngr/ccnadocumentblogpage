@@ -3,6 +3,12 @@ import { api } from '../api'
 import PostCard from '../components/PostCard'
 import Hero from '../components/Hero'
 import SkeletonCard from '../components/SkeletonCard'
+import FeaturedPosts from '../components/FeaturedPosts'
+import CategoryShowcase from '../components/CategoryShowcase'
+import StatsSection from '../components/StatsSection'
+import Newsletter from '../components/Newsletter'
+
+import SEO from '../components/SEO'
 
 export default function Home() {
   const [posts, setPosts] = useState([])
@@ -10,14 +16,6 @@ export default function Home() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const pageSize = 9
-
-  useEffect(() => {
-    document.title = 'CCNA Blog - Türkçe Ağ Eğitimi'
-    const metaDescription = document.querySelector('meta[name="description"]')
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 'IP Adresleme, Subnetting, Routing, Switching ve Güvenlik konularında kapsamlı Türkçe CCNA eğitim içerikleri.')
-    }
-  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -34,16 +32,30 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      <SEO
+        title="Türkçe Ağ Eğitimi"
+        description="IP Adresleme, Subnetting, Routing, Switching ve Güvenlik konularında kapsamlı Türkçe CCNA eğitim içerikleri."
+        canonical="/"
+      />
       {/* Hero Section */}
       <Hero />
+
+      {/* Featured Posts Carousel */}
+      <FeaturedPosts />
+
+      {/* Stats Section */}
+      <StatsSection />
+
+      {/* Category Showcase */}
+      <CategoryShowcase />
 
       {/* Latest Posts Section */}
       <section className="container-custom py-16">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold mb-2">Son Yazılar</h2>
+            <h2 className="text-3xl font-bold mb-2">Tüm Yazılar</h2>
             <p className="text-[hsl(var(--color-text-secondary))]">
-              En güncel CCNA eğitim içeriklerimizi keşfedin
+              CCNA eğitim içeriklerimize göz atın
             </p>
           </div>
         </div>
@@ -103,6 +115,9 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      {/* Newsletter Section */}
+      <Newsletter />
     </div>
   )
 }

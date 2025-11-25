@@ -10,6 +10,7 @@ client/dist/
 
 # Logs
 *.log
+logs/
 
 # VS Code
 .vscode/

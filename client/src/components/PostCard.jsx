@@ -1,8 +1,19 @@
 import { Link } from 'react-router-dom'
+import PropTypes from 'prop-types';
 
 export default function PostCard({ post }) {
   return (
     <article className="group relative card card-hover p-6 flex flex-col h-full">
+      {/* Featured Image */}
+      {post.featuredImageUrl && (
+        <img
+          src={post.featuredImageUrl}
+          alt={post.title}
+          className="w-full h-48 object-cover rounded-t-lg mb-4"
+          loading="lazy"
+        />
+      )}
+
       {/* Category Badge */}
       <Link
         to={`/kategoriler?sec=${post.categorySlug}`}
@@ -53,6 +64,19 @@ export default function PostCard({ post }) {
       {/* Gradient Accent */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity rounded-b-xl"></div>
     </article>
-  )
+  );
 }
 
+PostCard.propTypes = {
+  post: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    title: PropTypes.string.isRequired,
+    summary: PropTypes.string.isRequired,
+    slug: PropTypes.string.isRequired,
+    categoryName: PropTypes.string.isRequired,
+    categorySlug: PropTypes.string.isRequired,
+    createdAt: PropTypes.string.isRequired,
+    author: PropTypes.string,
+    featuredImageUrl: PropTypes.string,
+  }).isRequired,
+};

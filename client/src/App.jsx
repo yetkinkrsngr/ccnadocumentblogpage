@@ -1,10 +1,11 @@
 import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import ProtectedRoute from './components/ProtectedRoute'
 import IdleLogout from './components/IdleLogout'
 import ErrorBoundary from './components/ErrorBoundary'
+import { initGA, usePageTracking } from './utils/analytics'
 
 const Home = lazy(() => import('./pages/Home'))
 const Categories = lazy(() => import('./pages/Categories'))
@@ -26,6 +27,14 @@ const ChangePassword = lazy(() => import('./pages/ChangePassword'))
 const AuthDebug = lazy(() => import('./pages/AuthDebug'))
 
 function App() {
+  // Initialize Google Analytics
+  useEffect(() => {
+    initGA();
+  }, []);
+
+  // Track page views
+  usePageTracking();
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />

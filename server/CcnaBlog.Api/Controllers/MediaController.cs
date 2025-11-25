@@ -3,6 +3,9 @@ using System.Text;
 using CcnaBlog.Api.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Webp;
 
 namespace CcnaBlog.Api.Controllers
 {
@@ -67,11 +70,57 @@ namespace CcnaBlog.Api.Controllers
             var now = DateTime.UtcNow;
             var sub = Path.Combine(uploads, now.ToString("yyyy"), now.ToString("MM"));
             Directory.CreateDirectory(sub);
-            var safeName = Slugify(Path.GetFileNameWithoutExtension(file.FileName)) + "-" + Guid.NewGuid().ToString("N").Substring(0,8) + Path.GetExtension(file.FileName).ToLowerInvariant();
-            var fullPath = Path.Combine(sub, safeName);
-            await using (var stream = System.IO.File.Create(fullPath))
+
+            // Original extension for reference, but we will try to convert to webp if it's an image
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var safeNameBase = Slugify(Path.GetFileNameWithoutExtension(file.FileName)) + "-" + Guid.NewGuid().ToString("N").Substring(0,8);
+
+            string finalFileName;
+            string fullPath;
+
+            // Check if it is an image that we can process (skip svg)
+            if (file.ContentType != "image/svg+xml")
             {
-                await file.CopyToAsync(stream);
+                finalFileName = safeNameBase + ".webp";
+                fullPath = Path.Combine(sub, finalFileName);
+
+                try
+                {
+                    using var image = await Image.LoadAsync(file.OpenReadStream());
+
+                    // Resize if too big (e.g. > 1920px width)
+                    if (image.Width > 1920)
+                    {
+                        image.Mutate(x => x.Resize(new ResizeOptions
+                        {
+                            Size = new Size(1920, 0), // Maintain aspect ratio
+                            Mode = ResizeMode.Max
+                        }));
+                    }
+
+                    // Save as WebP
+                    await image.SaveAsWebpAsync(fullPath, new WebpEncoder { Quality = 80 });
+                }
+                catch
+                {
+                    // Fallback to original if processing fails
+                    finalFileName = safeNameBase + ext;
+                    fullPath = Path.Combine(sub, finalFileName);
+                    await using (var stream = System.IO.File.Create(fullPath))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+                }
+            }
+            else
+            {
+                // SVG or other non-processable images
+                finalFileName = safeNameBase + ext;
+                fullPath = Path.Combine(sub, finalFileName);
+                await using (var stream = System.IO.File.Create(fullPath))
+                {
+                    await file.CopyToAsync(stream);
+                }
             }
 
             var relPath = fullPath.Replace(_env.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot"), "").Replace('\\','/');
@@ -80,9 +129,9 @@ namespace CcnaBlog.Api.Controllers
             var baseUrl = _config["Site:BaseUrl"] ?? $"http://localhost:{Request.Host.Port ?? 5153}";
             var url = baseUrl.TrimEnd('/') + relPath;
 
-            var exp = DateTimeOffset.UtcNow.AddHours(24);
-            var sig = Sign(relPath, exp);
-            var signedUrl = baseUrl.TrimEnd('/') + $"/api/media/get?path={Uri.EscapeDataString(relPath)}&exp={exp.ToUnixTimeSeconds()}&sig={sig}";
+            var expDate = DateTimeOffset.UtcNow.AddHours(24);
+            var sig = Sign(relPath, expDate);
+            var signedUrl = baseUrl.TrimEnd('/') + $"/api/media/get?path={Uri.EscapeDataString(relPath)}&exp={expDate.ToUnixTimeSeconds()}&sig={sig}";
 
             return Ok(new UploadResponseDto(url, signedUrl, relPath));
         }
@@ -96,7 +145,18 @@ namespace CcnaBlog.Api.Controllers
             var full = Path.GetFullPath(Path.Combine(webRoot, path.TrimStart('/').Replace('/', Path.DirectorySeparatorChar)));
             if (!full.StartsWith(Path.GetFullPath(webRoot))) return Unauthorized();
             if (!System.IO.File.Exists(full)) return NotFound();
-            var contentType = "application/octet-stream";
+
+            var ext = Path.GetExtension(full).ToLowerInvariant();
+            var contentType = ext switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                ".webp" => "image/webp",
+                ".svg" => "image/svg+xml",
+                _ => "application/octet-stream"
+            };
+
             return PhysicalFile(full, contentType, enableRangeProcessing: true);
         }
 
@@ -117,7 +177,18 @@ namespace CcnaBlog.Api.Controllers
             var items = files.Select(fi => {
                 var rel = fi.FullName.Replace(_env.WebRootPath ?? Path.Combine(AppContext.BaseDirectory, "wwwroot"), "").Replace('\\','/');
                 if (!rel.StartsWith("/")) rel = "/" + rel;
-                return new MediaItemDto(rel, baseUrl.TrimEnd('/') + rel, fi.Length, fi.CreationTimeUtc, "");
+
+                var ext = fi.Extension.ToLowerInvariant();
+                var ct = ext switch {
+                    ".jpg" or ".jpeg" => "image/jpeg",
+                    ".png" => "image/png",
+                    ".gif" => "image/gif",
+                    ".webp" => "image/webp",
+                    ".svg" => "image/svg+xml",
+                    _ => "application/octet-stream"
+                };
+
+                return new MediaItemDto(rel, baseUrl.TrimEnd('/') + rel, fi.Length, fi.CreationTimeUtc, ct);
             }).ToList();
             return Ok(new { page, pageSize, items });
         }
@@ -134,3 +205,4 @@ namespace CcnaBlog.Api.Controllers
         }
     }
 }
+

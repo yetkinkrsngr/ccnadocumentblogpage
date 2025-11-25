@@ -7,6 +7,7 @@ import rehypeSanitize from 'rehype-sanitize'
 import 'prismjs/themes/prism.css'
 import '../prism-cisco'
 import { api } from '../api'
+import SEO from '../components/SEO'
 
 export default function Post() {
   const { slug } = useParams()
@@ -23,7 +24,6 @@ export default function Post() {
     api.get(`/posts/${slug}`).then(res => {
       setPost(res.data)
       setComments(res.data.comments)
-      document.title = `${res.data.title} - CCNA Blog`
     }).catch(err => {
       if (err?.response?.status === 404) setError('Yazı bulunamadı.')
       else setError('İçerik yüklenemedi. Lütfen daha sonra tekrar deneyin.')
@@ -44,10 +44,44 @@ export default function Post() {
   if (error) return <div className="max-w-3xl mx-auto"><p className="text-red-600">{error}</p></div>
   if (!post) return <p>Yükleniyor...</p>
 
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": post.title,
+    "image": post.featuredImageUrl ? [post.featuredImageUrl] : [],
+    "datePublished": post.createdAt,
+    "dateModified": post.updatedAt || post.createdAt,
+    "author": [{
+      "@type": "Person",
+      "name": post.author || "CCNA Blog"
+    }]
+  };
+
   return (
     <article className="max-w-3xl mx-auto">
+      <SEO
+        title={post.title}
+        description={post.summary}
+        canonical={`/yazi/${post.slug}`}
+        type="article"
+        image={post.featuredImageUrl}
+        publishedAt={post.createdAt}
+        updatedAt={post.updatedAt || post.createdAt}
+        author={post.author}
+        schema={schema}
+      />
       <h1 className="text-3xl font-semibold tracking-tight mb-2">{post.title}</h1>
       <div className="text-sm text-gray-500 mb-6">{new Date(post.createdAt).toLocaleDateString('tr-TR')} • {post.author} • {post.categoryName}</div>
+
+      {/* Featured Image */}
+      {post.featuredImageUrl && (
+        <img
+          src={post.featuredImageUrl}
+          alt={post.title}
+          className="w-full h-auto rounded-lg mb-8 shadow-lg"
+          loading="eager"
+        />
+      )}
 
       <div className="prose max-w-none prose-headings:scroll-mt-24">
         <ReactMarkdown
