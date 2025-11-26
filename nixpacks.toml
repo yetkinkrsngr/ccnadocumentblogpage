@@ -3,10 +3,9 @@ nixPkgs = ["dotnet-sdk_8"]
 
 [phases.build]
 cmds = [
-  "cd server/CcnaBlog.Api",
-  "dotnet restore",
-  "dotnet publish -c Release -o out"
+  "dotnet restore server/CcnaBlog.Api/CcnaBlog.Api.csproj",
+  "dotnet publish server/CcnaBlog.Api/CcnaBlog.Api.csproj -c Release -o out"
 ]
 
 [start]
-cmd = "cd server/CcnaBlog.Api/out && dotnet CcnaBlog.Api.dll"
+cmd = "dotnet out/CcnaBlog.Api.dll"
