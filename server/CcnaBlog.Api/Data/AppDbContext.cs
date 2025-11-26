@@ -13,6 +13,7 @@ namespace CcnaBlog.Api.Data
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Post> Posts => Set<Post>();
         public DbSet<Comment> Comments => Set<Comment>();
+        public DbSet<NewsletterSubscriber> NewsletterSubscribers => Set<NewsletterSubscriber>();
 
         // Keyless helper sets for raw SQL search/count
         public DbSet<PostSearchRow> PostSearchRows => Set<PostSearchRow>();
