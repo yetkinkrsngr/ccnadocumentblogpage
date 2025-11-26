@@ -12,6 +12,6 @@ namespace CcnaBlog.Api.Models
 
         public bool IsVerified { get; set; } = false;
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime SubscribedAt { get; set; } = DateTime.UtcNow;
     }
 }
