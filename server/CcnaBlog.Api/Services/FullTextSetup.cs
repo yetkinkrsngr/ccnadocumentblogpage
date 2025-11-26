@@ -6,6 +6,13 @@ namespace CcnaBlog.Api.Services
     {
         public static async Task EnsureAsync(Data.AppDbContext db)
         {
+            // Full-text search is SQL Server specific, skip for PostgreSQL
+            var providerName = db.Database.ProviderName;
+            if (providerName?.Contains("Npgsql") == true || providerName?.Contains("PostgreSQL") == true)
+            {
+                return; // Skip for PostgreSQL
+            }
+
             var sql = @"IF (SELECT FULLTEXTSERVICEPROPERTY('IsFullTextInstalled')) = 1
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM sys.fulltext_catalogs WHERE name = 'FTCatalog_CcnaBlog')

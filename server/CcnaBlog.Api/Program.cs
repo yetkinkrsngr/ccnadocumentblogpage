@@ -72,11 +72,22 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// DbContext
+// DbContext - Support both SQL Server (dev) and PostgreSQL (production)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                       ?? "Server=(localdb)\\MSSQLLocalDB;Database=CcnaBlogDb;Trusted_Connection=True;MultipleActiveResultSets=true";
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+
+// Detect database provider based on connection string
+if (connectionString.StartsWith("postgresql://") || connectionString.Contains("postgres"))
+{
+    builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+}
+else
+{
+    builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
+}
+
 builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>(name: "db");
+
 
 // CORS
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[]
